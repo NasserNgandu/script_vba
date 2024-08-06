@@ -1,0 +1,50 @@
+﻿Sub Fusion()
+    Dim dossier As String
+    Dim fichier As String
+    Dim wbSource As Workbook
+    Dim ws As Worksheet
+    Dim nouveauNom As String
+    Dim fd As FileDialog
+    
+    ' Ouvrir une boîte de dialogue pour sélectionner le dossier
+    MsgBox "Selectionnez le dossier contenant les classeurs à fusionner.", vbExclamation
+    Set fd = Application.FileDialog(msoFileDialogFolderPicker)
+    
+    If fd.Show = -1 Then ' Si l'utilisateur a sélectionné un dossier
+        dossier = fd.SelectedItems(1) & "\"
+    Else
+        MsgBox "Aucun dossier sélectionné. Le processus est annulé.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Obtenez le premier fichier dans le dossier
+    fichier = Dir(dossier & "*.xls*")
+    
+    ' Boucle à travers tous les fichiers du dossier
+    Do While fichier <> ""
+        ' Ouvrir le fichier
+        Set wbSource = Workbooks.Open(dossier & fichier)
+        
+        ' Copier chaque feuille dans le classeur actuel
+        For Each ws In wbSource.Sheets
+            ' Créer un nouveau nom basé sur le nom du fichier et de la feuille
+            nouveauNom = Left(fichier, InStrRev(fichier, ".") - 1) & "_" & ws.Name
+            
+            ' Copier la feuille à la fin
+            ws.Copy After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count)
+            
+            ' Renommer la feuille copiée
+            On Error Resume Next ' Ignorer les erreurs de nom de feuille
+            ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count).Name = nouveauNom
+            On Error GoTo 0 ' Réinitialiser la gestion des erreurs
+        Next ws
+        
+        ' Fermer le classeur source sans enregistrer
+        wbSource.Close SaveChanges:=False
+        
+        ' Obtenir le prochain fichier
+        fichier = Dir
+    Loop
+
+    MsgBox "L'opération s'est exécutée avec succès, Merci !.", vbExclamation
+End Sub
